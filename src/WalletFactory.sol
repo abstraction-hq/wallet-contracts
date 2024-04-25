@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Create2.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
+import "openzeppelin/utils/Create2.sol";
+import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
+import "openzeppelin/proxy/Clones.sol";
 
-import "./libraries/CustomERC1967.sol";
+import "./libraries/WalletProxy.sol";
 import "./KeyStore.sol";
 
-import "./EthereumWallet.sol";
+import "./Wallet.sol";
 
 /**
  * @title Ethereum Wallet Factory
@@ -16,11 +16,11 @@ import "./EthereumWallet.sol";
  * @notice wallet factory use to create new wallet base on our custom ERC1967Proxy
  */
 contract EthereumWalletFactory {
-    EthereumWallet public immutable walletImplement;
+    Wallet public immutable walletImplement;
     KeyStore public immutable keyStoreImplement;
 
     constructor(address entryPoint) {
-        walletImplement = new EthereumWallet(entryPoint);
+        walletImplement = new Wallet(entryPoint);
         keyStoreImplement = new KeyStore();
     }
 

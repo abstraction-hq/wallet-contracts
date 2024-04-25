@@ -3,9 +3,9 @@ pragma solidity >=0.8.4;
 
 import "@account-abstraction/contracts/core/BaseAccount.sol";
 import "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Create2.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
+import "openzeppelin/utils/Create2.sol";
+import "openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./libraries/CustomERC1967.sol";
 
