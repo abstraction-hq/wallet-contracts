@@ -38,25 +38,25 @@ contract EthereumWalletFactory {
         return KeyStore(keyStoreAddress);
     }
 
-    function _createWallet(address keyStore, uint256 walletIndex) internal returns (EthereumWallet) {
+    function _createWallet(address keyStore, uint256 walletIndex) internal returns (Wallet) {
         address payable walletAddress = getWalletAddress(keyStore, walletIndex);
         uint codeSize = walletAddress.code.length;
         if (codeSize > 0) {
-            return EthereumWallet(walletAddress);
+            return Wallet(walletAddress);
         }
 
         bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
-        new CustomERC1967{ salt: salt }();
-        CustomERC1967(walletAddress).init((address(walletImplement)), abi.encodeCall(EthereumWallet.init, (keyStore)));
+        new WalletProxy{ salt: salt }();
+        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.init, (keyStore)));
 
-        return EthereumWallet(walletAddress);
+        return Wallet(walletAddress);
     }
 
-    function createWalletWithKeyStore(address keyStore, uint256 walletIndex) external returns (EthereumWallet) {
+    function createWalletWithKeyStore(address keyStore, uint256 walletIndex) external returns (Wallet) {
         return _createWallet(keyStore, walletIndex);
     }
 
-    function createWallet(address initKey, uint256 walletIndex, bytes32 keyStoreSalt) external returns (EthereumWallet) {
+    function createWallet(address initKey, uint256 walletIndex, bytes32 keyStoreSalt) external returns (Wallet) {
         KeyStore keyStore = _createKeyStore(initKey, keyStoreSalt);
         return _createWallet(address(keyStore), walletIndex);
     }
@@ -64,7 +64,7 @@ contract EthereumWalletFactory {
     function getWalletAddress(address keyStore, uint256 walletIndex) public view returns (address payable) {
         bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
         return payable(Create2.computeAddress(salt, keccak256(abi.encodePacked(
-            type(CustomERC1967).creationCode,
+            type(WalletProxy).creationCode,
             ""
         ))));
     }

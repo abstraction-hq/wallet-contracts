@@ -7,7 +7,7 @@ import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin/utils/Create2.sol";
 import "openzeppelin/proxy/utils/Initializable.sol";
 
-import "./libraries/CustomERC1967.sol";
+import "./libraries/WalletProxy.sol";
 
 import "./interfaces/IKeyStore.sol";
 
@@ -20,7 +20,7 @@ contract KeyStore is IKeyStore, Initializable {
     address public immutable factory;
     address public immutable SENTINAL_ADDRESS = address(0x1);
     bytes32 public immutable WALLET_BYTE_CODE_HASH = keccak256(abi.encodePacked(
-        type(CustomERC1967).creationCode,
+        type(WalletProxy).creationCode,
         ""
     ));
 
