@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 abstract contract AdminRole {
-    mapping (address => bool) private _isAdmins;
+    mapping(address => bool) private _isAdmins;
 
     event SetAdmin(address admin, bool status);
 
@@ -21,7 +21,7 @@ abstract contract AdminRole {
         _setAdmin(admin, status);
     }
 
-    function isAdmin(address admin) external view returns(bool) {
+    function isAdmin(address admin) external view returns (bool) {
         return _isAdmins[admin];
     }
 }

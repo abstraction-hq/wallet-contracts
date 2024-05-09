@@ -14,9 +14,9 @@ abstract contract Recovery {
         address newAdmin;
     }
 
-    mapping (address => bool) private _isGuardians;
-    mapping (uint256 => Ticket) private _tickets;
-    mapping (uint256 => mapping(address => bool)) private _votedGuardians;
+    mapping(address => bool) private _isGuardians;
+    mapping(uint256 => Ticket) private _tickets;
+    mapping(uint256 => mapping(address => bool)) private _votedGuardians;
 
     event TicketOpened(uint256 tickedNum, address creator, Ticket ticket);
     event TicketVoted(uint256 tickedNum, address voter);
@@ -33,7 +33,7 @@ abstract contract Recovery {
         emit SetGuardian(guardian, status);
     }
 
-    function isGuardian(address guardian) external view returns(bool) {
+    function isGuardian(address guardian) external view returns (bool) {
         return _isGuardians[guardian];
     }
 

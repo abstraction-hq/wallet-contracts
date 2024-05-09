@@ -5,17 +5,19 @@ import "openzeppelin/utils/Create2.sol";
 import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import "openzeppelin/proxy/Clones.sol";
 
+import "./interfaces/IWalletFactory.sol";
+
 import "./libraries/WalletProxy.sol";
 import "./KeyStore.sol";
 
 import "./Wallet.sol";
 
 /**
- * @title Ethereum Wallet Factory
+ * @title Wallet Factory
  * @author Terry
  * @notice wallet factory use to create new wallet base on our custom ERC1967Proxy
  */
-contract EthereumWalletFactory {
+contract WalletFactory is IWalletFactory {
     Wallet public immutable walletImplement;
     KeyStore public immutable keyStoreImplement;
 
@@ -26,7 +28,7 @@ contract EthereumWalletFactory {
 
     function _createKeyStore(address initKey, bytes32 salt) internal returns (KeyStore) {
         address payable keyStoreAddress = getKeyStoreAddress(salt);
-        uint codeSize = keyStoreAddress.code.length;
+        uint256 codeSize = keyStoreAddress.code.length;
         if (codeSize > 0) {
             return KeyStore(keyStoreAddress);
         }
@@ -40,14 +42,14 @@ contract EthereumWalletFactory {
 
     function _createWallet(address keyStore, uint256 walletIndex) internal returns (Wallet) {
         address payable walletAddress = getWalletAddress(keyStore, walletIndex);
-        uint codeSize = walletAddress.code.length;
+        uint256 codeSize = walletAddress.code.length;
         if (codeSize > 0) {
             return Wallet(walletAddress);
         }
 
         bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
         new WalletProxy{ salt: salt }();
-        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.init, (keyStore)));
+        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.__Wallet_init, (keyStore)));
 
         return Wallet(walletAddress);
     }
@@ -63,10 +65,7 @@ contract EthereumWalletFactory {
 
     function getWalletAddress(address keyStore, uint256 walletIndex) public view returns (address payable) {
         bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
-        return payable(Create2.computeAddress(salt, keccak256(abi.encodePacked(
-            type(WalletProxy).creationCode,
-            ""
-        ))));
+        return payable(Create2.computeAddress(salt, keccak256(abi.encodePacked(type(WalletProxy).creationCode, ""))));
     }
 
     function getKeyStoreAddress(bytes32 salt) public view returns (address payable) {

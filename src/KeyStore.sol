@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import "account-abstraction/core/BaseAccount.sol";
 import "account-abstraction/interfaces/IEntryPoint.sol";
 import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin/utils/Create2.sol";
@@ -12,17 +11,14 @@ import "./libraries/WalletProxy.sol";
 import "./interfaces/IKeyStore.sol";
 
 /**
- * @title Ziphius Keystore
- * @author Terry
- * @notice Ziphius Keystore, this smart contract will be deploy to Ethereum only
+ * @title Keystore
+ * @author @imduchuyyy
+ * @notice Keystore, this smart contract will be deploy to Ethereum only
  */
 contract KeyStore is IKeyStore, Initializable {
     address public immutable factory;
-    address public immutable SENTINAL_ADDRESS = address(0x1);
-    bytes32 public immutable WALLET_BYTE_CODE_HASH = keccak256(abi.encodePacked(
-        type(WalletProxy).creationCode,
-        ""
-    ));
+    address public immutable SENTINEL_ADDRESS = address(0x1);
+    bytes32 public immutable WALLET_BYTE_CODE_HASH = keccak256(abi.encodePacked(type(WalletProxy).creationCode, ""));
 
     mapping(address => address) private _keys;
     uint256 internal _keyCount;
@@ -34,8 +30,8 @@ contract KeyStore is IKeyStore, Initializable {
     }
 
     function init(address initKey) external override initializer {
-        _keys[SENTINAL_ADDRESS] = initKey;
-        _keys[initKey] = SENTINAL_ADDRESS;
+        _keys[SENTINEL_ADDRESS] = initKey;
+        _keys[initKey] = SENTINEL_ADDRESS;
 
         _keyCount++;
     }
@@ -51,14 +47,14 @@ contract KeyStore is IKeyStore, Initializable {
     }
 
     function _addKey(address key) internal {
-        require(key != address(0) && key != SENTINAL_ADDRESS && key != address(this), "KeyStore: Invalid Key");
-        _keys[key] = _keys[SENTINAL_ADDRESS];
-        _keys[SENTINAL_ADDRESS] = key;
+        require(key != address(0) && key != SENTINEL_ADDRESS && key != address(this), "KeyStore: Invalid Key");
+        _keys[key] = _keys[SENTINEL_ADDRESS];
+        _keys[SENTINEL_ADDRESS] = key;
         _keyCount++;
     }
 
     function _removeKey(address prevKey, address key) internal {
-        require(key != address(0) && key != SENTINAL_ADDRESS, "KeyStore: Invalid Key");
+        require(key != address(0) && key != SENTINEL_ADDRESS, "KeyStore: Invalid Key");
         require(_keys[prevKey] == key, "KeyStore: Invalid prevKey");
         _keys[prevKey] = _keys[key];
         _keys[key] = address(0);
@@ -84,8 +80,8 @@ contract KeyStore is IKeyStore, Initializable {
 
         // populate return array
         uint256 index = 0;
-        address currentKey = _keys[SENTINAL_ADDRESS];
-        while (currentKey != SENTINAL_ADDRESS) {
+        address currentKey = _keys[SENTINEL_ADDRESS];
+        while (currentKey != SENTINEL_ADDRESS) {
             array[index] = currentKey;
             currentKey = _keys[currentKey];
             index++;
@@ -94,6 +90,6 @@ contract KeyStore is IKeyStore, Initializable {
     }
 
     function isValidKey(address key) external view override returns (bool) {
-        return _keys[key] != address(0) && key != SENTINAL_ADDRESS;
+        return _keys[key] != address(0) && key != SENTINEL_ADDRESS;
     }
 }
