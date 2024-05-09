@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "openzeppelin/utils/Create2.sol";
 import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
-import "openzeppelin/proxy/Clones.sol";
 
 import "./interfaces/IWalletFactory.sol";
 import "./Wallet.sol";

@@ -5,13 +5,14 @@ import "account-abstraction/core/BaseAccount.sol";
 import "openzeppelin/proxy/utils/Initializable.sol";
 import "openzeppelin/utils/cryptography/ECDSA.sol";
 import "openzeppelin/utils/StorageSlot.sol";
+import "openzeppelin/proxy/utils/UUPSUpgradeable.sol";
 import "openzeppelin/interfaces/IERC1271.sol";
 
 import "./interfaces/IModule.sol";
 import "./interfaces/IWallet.sol";
 import "./libraries/DefaultCallbackHandler.sol";
 
-contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbackHandler {
+contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbackHandler, UUPSUpgradeable {
     using ECDSA for bytes32;
     using Address for address;
 
@@ -36,6 +37,8 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         require(_isValidCaller(), "Wallet: Invalid Caller");
         _;
     }
+
+    function _authorizeUpgrade(address) internal override authorized {}
 
     function _setKey(address key, address value) internal {
         bytes32 slotKey = keccak256(abi.encode(KEY_MANAGE_PREFIX_SLOT, key));
@@ -87,7 +90,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
      * @notice only accept entrypoint or self call
      */
     function _isValidCaller() internal view returns (bool) {
-        return msg.sender == address(entryPoint()) || msg.sender == address(this);
+        return msg.sender == address(entryPoint()) || msg.sender == address(this) || isValidKey(msg.sender);
     }
 
     /**
