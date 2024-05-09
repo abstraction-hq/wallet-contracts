@@ -1,3 +1,5 @@
+// Maybe we can delete keystore because EIP-7702
+
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 

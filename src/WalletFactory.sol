@@ -49,7 +49,7 @@ contract WalletFactory is IWalletFactory {
 
         bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
         new WalletProxy{ salt: salt }();
-        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.__Wallet_init, (keyStore)));
+        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.__Wallet_init, (keyStore, address(this))));
 
         return Wallet(walletAddress);
     }
