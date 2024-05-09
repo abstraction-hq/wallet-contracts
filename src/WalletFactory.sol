@@ -6,10 +6,6 @@ import "openzeppelin/proxy/ERC1967/ERC1967Proxy.sol";
 import "openzeppelin/proxy/Clones.sol";
 
 import "./interfaces/IWalletFactory.sol";
-
-import "./libraries/WalletProxy.sol";
-import "./KeyStore.sol";
-
 import "./Wallet.sol";
 
 /**
@@ -19,56 +15,40 @@ import "./Wallet.sol";
  */
 contract WalletFactory is IWalletFactory {
     Wallet public immutable walletImplement;
-    KeyStore public immutable keyStoreImplement;
 
     constructor(address entryPoint) {
         walletImplement = new Wallet(entryPoint);
-        keyStoreImplement = new KeyStore();
     }
 
-    function _createKeyStore(address initKey, bytes32 salt) internal returns (KeyStore) {
-        address payable keyStoreAddress = getKeyStoreAddress(salt);
-        uint256 codeSize = keyStoreAddress.code.length;
-        if (codeSize > 0) {
-            return KeyStore(keyStoreAddress);
-        }
-
-        // using Clones proxy to saving gas cost
-        Clones.cloneDeterministic(address(keyStoreImplement), salt);
-        KeyStore(keyStoreAddress).init(initKey);
-
-        return KeyStore(keyStoreAddress);
-    }
-
-    function _createWallet(address keyStore, uint256 walletIndex) internal returns (Wallet) {
-        address payable walletAddress = getWalletAddress(keyStore, walletIndex);
+    function _createWallet(address initKey) internal returns (Wallet) {
+        address payable walletAddress = getWalletAddress(initKey);
         uint256 codeSize = walletAddress.code.length;
         if (codeSize > 0) {
             return Wallet(walletAddress);
         }
 
-        bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
-        new WalletProxy{ salt: salt }();
-        WalletProxy(walletAddress).init((address(walletImplement)), abi.encodeCall(Wallet.__Wallet_init, (keyStore, address(this))));
+        bytes32 salt = keccak256(abi.encode(initKey));
+        new ERC1967Proxy{ salt: salt }(address(walletImplement), abi.encodeWithSignature("__Wallet_init(address)", initKey));
 
         return Wallet(walletAddress);
     }
 
-    function createWalletWithKeyStore(address keyStore, uint256 walletIndex) external returns (Wallet) {
-        return _createWallet(keyStore, walletIndex);
+    function createWallet(address initKey) external returns (Wallet) {
+        return _createWallet(initKey);
     }
 
-    function createWallet(address initKey, uint256 walletIndex, bytes32 keyStoreSalt) external returns (Wallet) {
-        KeyStore keyStore = _createKeyStore(initKey, keyStoreSalt);
-        return _createWallet(address(keyStore), walletIndex);
-    }
-
-    function getWalletAddress(address keyStore, uint256 walletIndex) public view returns (address payable) {
-        bytes32 salt = keccak256(abi.encode(keyStore, walletIndex));
-        return payable(Create2.computeAddress(salt, keccak256(abi.encodePacked(type(WalletProxy).creationCode, ""))));
-    }
-
-    function getKeyStoreAddress(bytes32 salt) public view returns (address payable) {
-        return payable(Clones.predictDeterministicAddress(address(keyStoreImplement), salt));
+    function getWalletAddress(address initKey) public view returns (address payable) {
+        bytes32 salt = keccak256(abi.encode(initKey));
+        return payable(
+            Create2.computeAddress(
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        type(ERC1967Proxy).creationCode,
+                        abi.encode(address(walletImplement), abi.encodeWithSignature("__Wallet_init(address)", initKey))
+                    )
+                )
+            )
+        );
     }
 }
