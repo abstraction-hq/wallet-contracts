@@ -41,6 +41,11 @@ contract Recovery is IModule {
         _;
     }
 
+    modifier onlyWallet() {
+        require(msg.sender == _wallet, "Only wallet can call");
+        _;
+    }
+
     function _setGuardian(address guardian, bool status) internal {
         _isGuardians[guardian] = status;
 
@@ -81,6 +86,7 @@ contract Recovery is IModule {
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash)
         external
         override
+        onlyWallet()
         returns (uint256 validationData)
     {
         require(msg.sender == _wallet, "Wrong wallet");
@@ -90,6 +96,7 @@ contract Recovery is IModule {
         public
         view
         override
+        onlyWallet()
         returns (bytes4 magicValue)
     {
         return 0x0000;
