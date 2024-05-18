@@ -29,7 +29,7 @@ contract Recovery is IModule {
     event TicketVoted(uint256 tickedNum, address voter);
     event SetGuardian(address guardian, bool status);
 
-    address immutable private _wallet;
+    address private immutable _wallet;
     Config private _config;
 
     constructor(address wallet) {
@@ -71,7 +71,7 @@ contract Recovery is IModule {
         require(!_votedGuardians[ticketNum][msg.sender], "Voted");
 
         ticket.totalVote++;
-        
+
         if (ticket.totalVote >= _config.threshold) {
             ticket.status = TicketStatus.Pass;
             ticket.startBlock = block.number;
@@ -94,5 +94,4 @@ contract Recovery is IModule {
     {
         return 0x0000;
     }
-
 }
