@@ -66,11 +66,7 @@ contract WalletTest is Test {
         vm.deal(address(wallet), 1 ether);
 
         UserOperation memory op = entryPoint.fillUserOp(address(wallet), "");
-        op.callData = abi.encodeWithSelector(
-            wallet.addKey.selector,
-            owner2Address,
-            uint256(0)
-        );
+        op.callData = abi.encodeWithSelector(wallet.addKey.selector, owner2Address, uint256(0));
         op.signature = abi.encodePacked(bytes20(owner), entryPoint.signUserOpHash(vm, ownerKey, op));
 
         UserOperation[] memory ops = new UserOperation[](1);
@@ -88,11 +84,7 @@ contract WalletTest is Test {
         vm.deal(address(wallet), 1 ether);
 
         UserOperation memory op = entryPoint.fillUserOp(address(wallet), "");
-        op.callData = abi.encodeWithSelector(
-            wallet.addKey.selector,
-            owner2Address,
-            uint256(0)
-        );
+        op.callData = abi.encodeWithSelector(wallet.addKey.selector, owner2Address, uint256(0));
         op.signature = abi.encodePacked(bytes20(owner), entryPoint.signUserOpHash(vm, ownerKey, op));
 
         UserOperation[] memory ops = new UserOperation[](1);
@@ -104,12 +96,7 @@ contract WalletTest is Test {
 
         op.nonce = entryPoint.getNonce(address(wallet), 0);
         op.initCode = "";
-        op.callData = abi.encodeWithSelector(
-            wallet.removeKey.selector,
-            address(0x1),
-            owner2Address,
-            uint256(0)
-        );
+        op.callData = abi.encodeWithSelector(wallet.removeKey.selector, address(0x1), owner2Address, uint256(0));
         op.signature = abi.encodePacked(bytes20(owner), entryPoint.signUserOpHash(vm, ownerKey, op));
         ops[0] = op;
 

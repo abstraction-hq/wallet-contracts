@@ -1,4 +1,4 @@
-## Helix wallet
+## Abstraction wallet
 
 Foundry consists of:
 

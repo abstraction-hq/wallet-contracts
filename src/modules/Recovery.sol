@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 
-abstract contract Recovery {
+import "../interfaces/IModule.sol";
+
+contract Recovery is IModule {
     struct Config {
         uint16 threshold;
         uint96 delayTime;
     }
 
+    enum TicketStatus {
+        Initial,
+        Pass
+    }
+
     struct Ticket {
-        bool isActive;
+        TicketStatus status;
         uint256 totalVote;
-        uint256 startTime;
-        address newAdmin;
+        uint256 startBlock;
+        address newKey;
     }
 
     mapping(address => bool) private _isGuardians;
@@ -22,8 +29,20 @@ abstract contract Recovery {
     event TicketVoted(uint256 tickedNum, address voter);
     event SetGuardian(address guardian, bool status);
 
+    address private immutable _wallet;
+    Config private _config;
+
+    constructor(address wallet) {
+        _wallet = wallet;
+    }
+
     modifier onlyGuardian() {
         require(_isGuardians[msg.sender], "Only Guardian can call");
+        _;
+    }
+
+    modifier onlyWallet() {
+        require(msg.sender == _wallet, "Only wallet can call");
         _;
     }
 
@@ -37,14 +56,14 @@ abstract contract Recovery {
         return _isGuardians[guardian];
     }
 
-    function openTicket(uint256 ticketNum, address newAdmin) external onlyGuardian {
+    function openTicket(uint256 ticketNum, address newKey) external onlyGuardian {
         Ticket storage ticket = _tickets[ticketNum];
-        require(!ticket.isActive, "Ticket exited");
+        require(ticket.totalVote == 0, "Ticked exited");
 
-        ticket.isActive = true;
+        ticket.status = TicketStatus.Initial;
         ticket.totalVote = 1;
-        ticket.startTime = 0;
-        ticket.newAdmin = newAdmin;
+        ticket.startBlock = 0;
+        ticket.newKey = newKey;
 
         _votedGuardians[ticketNum][msg.sender] = true;
 
@@ -53,9 +72,33 @@ abstract contract Recovery {
 
     function voteTicket(uint256 ticketNum) external onlyGuardian {
         Ticket storage ticket = _tickets[ticketNum];
-        require(!ticket.isActive, "Ticket exited");
+        require(ticket.totalVote != 0, "Ticked not found");
         require(!_votedGuardians[ticketNum][msg.sender], "Voted");
 
         ticket.totalVote++;
+
+        if (ticket.totalVote >= _config.threshold) {
+            ticket.status = TicketStatus.Pass;
+            ticket.startBlock = block.number;
+        }
+    }
+
+    function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash)
+        external
+        override
+        onlyWallet()
+        returns (uint256 validationData)
+    {
+        require(msg.sender == _wallet, "Wrong wallet");
+    }
+
+    function isValidSignature(bytes32 hash, bytes calldata signature)
+        public
+        view
+        override
+        onlyWallet()
+        returns (bytes4 magicValue)
+    {
+        return 0x0000;
     }
 }
