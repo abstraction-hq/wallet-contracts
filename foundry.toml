@@ -8,6 +8,6 @@ optimizer_runs = 200
 
 
 [rpc_endpoints]
-viction_devnet = "https://rpc.viction-qcnet.tforce.dev/"
+viction_testnet = "https://rpc-testnet.viction.xyz"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
