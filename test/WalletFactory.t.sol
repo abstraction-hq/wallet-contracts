@@ -13,8 +13,7 @@ import "forge-std/console.sol";
 using ERC4337Utils for EntryPoint;
 
 contract WalletFactoryTest is Test {
-    function setUp() external {
-    }
+    function setUp() external {}
 
     function testLog() external {
         console.logBytes(type(ERC1967Proxy).creationCode);
