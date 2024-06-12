@@ -110,6 +110,7 @@ contract RecoveryModule is IModule {
 
     function validateUserOp(UserOperation calldata userOp, bytes32)
         external
+        view
         override
         onlyWallet
         returns (uint256 validationData)
