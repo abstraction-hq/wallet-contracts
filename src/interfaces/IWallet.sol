@@ -11,6 +11,8 @@ interface IWallet {
      * execute a sequence of transactions
      */
     function executeBatch(address[] calldata dest, uint256[] calldata values, bytes[] calldata func) external;
+    function addKey(address key) external;
+    function removeKey(address prevKey, address key) external;
 
     event Execute();
 }

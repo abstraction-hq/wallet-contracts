@@ -12,25 +12,47 @@ import "./interfaces/IModule.sol";
 import "./interfaces/IWallet.sol";
 import "./libraries/DefaultCallbackHandler.sol";
 
+/**
+ * @title Wallet
+ * @author imduchuyyy
+ * @notice This contract represents a Wallet in the system.
+ */
 contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbackHandler, UUPSUpgradeable {
     using ECDSA for bytes32;
     using Address for address;
 
     address public immutable SENTINEL_ADDRESS = address(0x1);
-    bytes32 public immutable KEY_MANAGE_PREFIX_SLOT = keccak256("contract.v1.key-manage");
-    bytes32 public immutable KEY_COUNT_SLOT = keccak256("contract.v1.key-count");
+    bytes32 public immutable KEY_MANAGE_PREFIX_SLOT = bytes32(uint256(keccak256("contract.v1.key-manage")) - 1);
+    bytes32 public immutable KEY_COUNT_SLOT = bytes32(uint256(keccak256("contract.v1.key-count")) - 1);
 
     IEntryPoint private immutable _entryPoint;
+
+    struct CallbackModule {
+        UserOperation userOp;
+        address module;
+        bytes32 userOpHash;
+    }
+
+    CallbackModule private _callbackCache;
 
     constructor(address entryPointAddress) {
         _entryPoint = IEntryPoint(entryPointAddress);
     }
 
+    /**
+     * @notice This function is used to initialize the wallet with an initial key.
+     * @param initKey The initial key to be set for the wallet.
+     */
     function __Wallet_init(address initKey) external initializer {
         _setKey(SENTINEL_ADDRESS, initKey);
         _setKey(initKey, SENTINEL_ADDRESS);
 
         _increaseTotalKey();
+    }
+
+    modifier moduleCallback() {
+        _;
+        _moduleCallback();
     }
 
     modifier authorized() {
@@ -62,6 +84,13 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         return StorageSlot.getUint256Slot(KEY_COUNT_SLOT).value;
     }
 
+    function _moduleCallback() internal {
+        if (_callbackCache.module != address(0)) {
+            IModule(_callbackCache.module).callback(_callbackCache.userOp, _callbackCache.userOpHash);
+            delete _callbackCache;
+        }
+    }
+
     function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
         internal
         override
@@ -72,6 +101,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
 
         if (isValidKey(key)) {
             if (key.isContract()) {
+                _callbackCache = CallbackModule(userOp, key, userOpHash);
                 validationData = IModule(key).validateUserOp(userOp, userOpHash);
             } else {
                 bytes32 hash = userOpHash.toEthSignedMessageHash();
@@ -105,7 +135,13 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         }
     }
 
-    function execute(address dest, uint256 value, bytes calldata func) external override(IWallet) authorized {
+    /// @inheritdoc IWallet
+    function execute(address dest, uint256 value, bytes calldata func)
+        external
+        override(IWallet)
+        authorized
+        moduleCallback
+    {
         _call(dest, value, func);
         emit Execute();
     }
@@ -115,6 +151,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         external
         override(IWallet)
         authorized
+        moduleCallback
     {
         require(dest.length == func.length, "Wrong array lengths");
         for (uint256 i = 0; i < dest.length; i++) {
@@ -123,7 +160,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         emit Execute();
     }
 
-    function addKey(address key) external authorized {
+    function addKey(address key) external override authorized moduleCallback {
         require(key != address(0) && key != SENTINEL_ADDRESS && key != address(this), "Invalid Key");
         address firstKey = _getKey(SENTINEL_ADDRESS);
         _setKey(key, firstKey);
@@ -132,7 +169,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         _increaseTotalKey();
     }
 
-    function removeKey(address prevKey, address key) external authorized {
+    function removeKey(address prevKey, address key) external override authorized moduleCallback {
         require(key != address(0) && key != SENTINEL_ADDRESS, "Invalid Key");
         require(_getKey(prevKey) == key, "Invalid prevKey");
 
@@ -181,6 +218,10 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
         return _getTotalKey();
     }
 
+    /**
+     * @notice This function is used to get the current keys of the wallet.
+     * @return keys The current keys of the wallet.
+     */
     function getKeys() external view returns (address[] memory keys) {
         uint256 totalKey = getTotalKey();
         address[] memory array = new address[](totalKey);

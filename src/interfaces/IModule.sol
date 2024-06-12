@@ -8,4 +8,6 @@ interface IModule is IERC1271 {
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash)
         external
         returns (uint256 validationData);
+
+    function callback(UserOperation calldata userOp, bytes32 userOpHash) external;
 }
