@@ -41,4 +41,7 @@ contract DefaultCallbackHandler is IERC721Receiver, IERC1155Receiver, IERC777Rec
         return interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
             || interfaceId == type(IERC165).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    fallback() external payable {}
+    receive() external payable {}
 }
