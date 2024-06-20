@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "../interfaces/IModule.sol";
 import "../interfaces/IWallet.sol";
 
+import {WebAuthn} from "webauthn-sol/WebAuthn.sol";
+
 contract PasskeyModuleFactory {
     function create(bytes32 salt) external returns (PasskeyModule) {
         return new PasskeyModule{salt: salt}();
