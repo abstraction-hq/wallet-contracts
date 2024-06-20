@@ -5,3 +5,4 @@ forge-std/=lib/forge-std/src/
 openzeppelin/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+webauthn-sol/=lib/webauthn-sol/src/
