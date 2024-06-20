@@ -20,6 +20,8 @@ contract PasskeyModule is IModule {
         override
         returns (uint256 validationData)
     {
+        address module = address(bytes20(userOp.signature[:20]));
+        require(module == address(this), "invalid module");
         return 0;
     }
 
@@ -27,7 +29,7 @@ contract PasskeyModule is IModule {
 
     }
 
-    function isValidSignature(bytes32, bytes calldata) public view override returns (bytes4 magicValue) {
+    function isValidSignature(bytes32 digest, bytes calldata signature) public view override returns (bytes4 magicValue) {
         return 0x0000;
     }
 }
