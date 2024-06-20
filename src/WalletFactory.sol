@@ -9,7 +9,7 @@ import "./Wallet.sol";
 
 /**
  * @title Wallet Factory
- * @author Terry
+ * @author imduchuyyy
  * @notice wallet factory use to create new wallet base on our custom ERC1967Proxy
  */
 contract WalletFactory is IWalletFactory {
@@ -19,25 +19,23 @@ contract WalletFactory is IWalletFactory {
         walletImplement = new Wallet(entryPoint);
     }
 
-    function _createWallet(address initKey) internal returns (Wallet) {
-        address payable walletAddress = getWalletAddress(initKey);
+    function _createWallet(address initKey, bytes32 salt) internal returns (Wallet) {
+        address payable walletAddress = getWalletAddress(initKey, salt);
         uint256 codeSize = walletAddress.code.length;
         if (codeSize > 0) {
             return Wallet(walletAddress);
         }
 
-        bytes32 salt = keccak256(abi.encode(initKey));
         new ERC1967Proxy{ salt: salt }(address(walletImplement), abi.encodeWithSignature("__Wallet_init(address)", initKey));
 
         return Wallet(walletAddress);
     }
 
-    function createWallet(address initKey) external returns (Wallet) {
-        return _createWallet(initKey);
+    function createWallet(address initKey, bytes32 salt) external returns (Wallet) {
+        return _createWallet(initKey, salt);
     }
 
-    function getWalletAddress(address initKey) public view returns (address payable) {
-        bytes32 salt = keccak256(abi.encode(initKey));
+    function getWalletAddress(address initKey, bytes32 salt) public view returns (address payable) {
         return payable(
             Create2.computeAddress(
                 salt,

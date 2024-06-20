@@ -29,14 +29,14 @@ contract WalletTest is Test {
         walletFactory = new WalletFactory(address(entryPoint));
         beneficiary = payable(address(vm.addr(uint256(keccak256("beneficiary")))));
 
-        wallet = Wallet(walletFactory.getWalletAddress(owner));
+        wallet = Wallet(walletFactory.getWalletAddress(owner, bytes32(uint256(1))));
 
         vm.deal(address(wallet), 1 ether);
 
         UserOperation memory op = entryPoint.fillUserOp(address(wallet), "");
         op.initCode = abi.encodePacked(
             bytes20(address(walletFactory)),
-            abi.encodeWithSelector(walletFactory.createWallet.selector, owner, uint256(0), bytes32(uint256(1)))
+            abi.encodeWithSelector(walletFactory.createWallet.selector, owner, bytes32(uint256(1)))
         );
         op.signature = abi.encodePacked(bytes20(owner), entryPoint.signUserOpHash(vm, ownerKey, op));
 
