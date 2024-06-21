@@ -5,6 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 
 import "account-abstraction/core/EntryPoint.sol";
 import "../src/WalletFactory.sol";
+import "../src/modules/Passkey.sol";
 
 contract Deployer is Script {
     function setUp() external {}
@@ -15,6 +16,8 @@ contract Deployer is Script {
 
         EntryPoint entryPoint = new EntryPoint();
         new WalletFactory(address(entryPoint));
+
+        new PasskeyModuleFactory();
 
         vm.stopBroadcast();
     }
