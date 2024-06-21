@@ -127,7 +127,7 @@ contract RecoveryModule is IModule {
         return 0;
     }
 
-    function callback(UserOperation calldata userOp, bytes32) external onlyWallet override {
+    function callback(UserOperation calldata userOp, bytes32) external override onlyWallet {
         uint256 ticketNum = _decodeTicketNum(userOp.signature);
         delete _tickets[ticketNum];
     }
