@@ -29,7 +29,7 @@ contract WalletTest is Test {
         walletFactory = new WalletFactory(address(entryPoint));
         beneficiary = payable(address(vm.addr(uint256(keccak256("beneficiary")))));
 
-        wallet = Wallet(walletFactory.getWalletAddress(owner, bytes32(uint256(1))));
+        wallet = Wallet(walletFactory.getWalletAddress(bytes32(uint256(1))));
 
         vm.deal(address(wallet), 1 ether);
 
