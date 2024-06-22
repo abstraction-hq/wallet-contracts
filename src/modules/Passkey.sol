@@ -9,26 +9,6 @@ import "../libraries/Base64Url.sol";
 
 import {WebAuthn} from "../libraries/WebAuthn.sol";
 
-contract PasskeyModuleFactory {
-    function create(uint256 x, uint256 y) external returns (PasskeyModule) {
-        bytes32 salt = keccak256(abi.encodePacked(x, y));
-        PasskeyModule passkeyModule = new PasskeyModule{salt: salt}();
-        passkeyModule.initialize(x, y);
-
-        return passkeyModule;
-    }
-
-    function getPasskeyAddress(uint256 x, uint256 y) external view returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(x, y));
-        return payable(
-            Create2.computeAddress(
-                salt,
-                keccak256(type(PasskeyModule).creationCode)
-            )
-        );
-    }
-}
-
 contract PasskeyModule is IModule {
     uint256 public x;
     uint256 public y;
