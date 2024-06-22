@@ -15,7 +15,7 @@ using ERC4337Utils for EntryPoint;
 contract WalletFactoryTest is Test {
     function setUp() external {}
 
-    function testLog() external {
-        console.logBytes(type(ERC1967Proxy).creationCode);
+    function testLog() external view {
+        console.logBytes32(keccak256(type(ERC1967Proxy).creationCode));
     }
 }

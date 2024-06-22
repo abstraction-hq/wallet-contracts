@@ -46,7 +46,7 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Deployer.s.sol --rpc-url <network_name> --legacy
+$ forge script script/Deploy.s.sol --rpc-url <network_name> --legacy --broadcast
 ```
 
 ### Cast

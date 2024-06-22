@@ -14,6 +14,10 @@ contract PasskeyModuleTest is Test {
         passkeyModuleFactory = new PasskeyModuleFactory();
     }
 
+    function testLog() external view {
+        console.logBytes32(keccak256(type(PasskeyModule).creationCode));
+    }
+
     function testPassKey() external {
         passkeyModule = passkeyModuleFactory.create(
             28203248099655634232680422976510411012986437076966613883671554831358983509938,
