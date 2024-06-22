@@ -5,7 +5,7 @@ import "account-abstraction/core/EntryPoint.sol";
 import "account-abstraction/interfaces/IEntryPoint.sol";
 import "../src/WalletFactory.sol";
 import "../src/Wallet.sol";
-import "./ERC4337Utils.sol";
+import "./utils/ERC4337Utils.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -29,7 +29,7 @@ contract WalletTest is Test {
         walletFactory = new WalletFactory(address(entryPoint));
         beneficiary = payable(address(vm.addr(uint256(keccak256("beneficiary")))));
 
-        wallet = Wallet(walletFactory.getWalletAddress(owner, bytes32(uint256(1))));
+        wallet = Wallet(walletFactory.getWalletAddress(bytes32(uint256(1))));
 
         vm.deal(address(wallet), 1 ether);
 
