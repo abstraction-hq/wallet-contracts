@@ -20,16 +20,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-
 import {FCL_Elliptic_ZZ} from "./FCL_elliptic.sol";
-
-
 
 library FCL_ecdsa {
     // Set parameters for curve sec256r1.public
-      //curve order (number of points)
+    //curve order (number of points)
     uint256 constant n = FCL_Elliptic_ZZ.n;
-  
+
     /**
      * @dev ECDSA verification, given , signature, and public key.
      */
@@ -37,12 +34,11 @@ library FCL_ecdsa {
     /**
      * @dev ECDSA verification, given , signature, and public key, no calldata version
      */
-    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy)  internal view returns (bool){
-
+    function ecdsa_verify(bytes32 message, uint256 r, uint256 s, uint256 Qx, uint256 Qy) internal view returns (bool) {
         if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
             return false;
         }
-        
+
         if (!FCL_Elliptic_ZZ.ecAff_isOnCurve(Qx, Qy)) {
             return false;
         }
@@ -55,33 +51,32 @@ library FCL_ecdsa {
 
         x1 = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S_asm(Qx, Qy, scalar_u, scalar_v);
 
-        x1= addmod(x1, n-r,n );
-    
+        x1 = addmod(x1, n - r, n);
+
         return x1 == 0;
     }
 
-    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address)
-    {
-         if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
+    function ec_recover_r1(uint256 h, uint256 v, uint256 r, uint256 s) internal view returns (address) {
+        if (r == 0 || r >= FCL_Elliptic_ZZ.n || s == 0 || s >= FCL_Elliptic_ZZ.n) {
             return address(0);
         }
-        uint256 y=FCL_Elliptic_ZZ.ec_Decompress(r, v-27);
-        uint256 rinv=FCL_Elliptic_ZZ.FCL_nModInv(r);
-        uint256 u1=mulmod(FCL_Elliptic_ZZ.n-addmod(0,h,FCL_Elliptic_ZZ.n), rinv,FCL_Elliptic_ZZ.n);//-hr^-1
-        uint256 u2=mulmod(s, rinv,FCL_Elliptic_ZZ.n);//sr^-1
+        uint256 y = FCL_Elliptic_ZZ.ec_Decompress(r, v - 27);
+        uint256 rinv = FCL_Elliptic_ZZ.FCL_nModInv(r);
+        uint256 u1 = mulmod(FCL_Elliptic_ZZ.n - addmod(0, h, FCL_Elliptic_ZZ.n), rinv, FCL_Elliptic_ZZ.n); //-hr^-1
+        uint256 u2 = mulmod(s, rinv, FCL_Elliptic_ZZ.n); //sr^-1
 
         uint256 Qx;
         uint256 Qy;
-        (Qx,Qy)=FCL_Elliptic_ZZ.ecZZ_mulmuladd(r,y, u1, u2);
+        (Qx, Qy) = FCL_Elliptic_ZZ.ecZZ_mulmuladd(r, y, u1, u2);
 
         return address(uint160(uint256(keccak256(abi.encodePacked(Qx, Qy)))));
     }
 
     function ecdsa_precomputed_verify(bytes32 message, uint256 r, uint256 s, address Shamir8)
-        internal view
+        internal
+        view
         returns (bool)
     {
-       
         if (r == 0 || r >= n || s == 0 || s >= n) {
             return false;
         }
@@ -97,13 +92,14 @@ library FCL_ecdsa {
         //Shamir 8 dimensions
         X = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
 
-        X= addmod(X, n-r,n );
+        X = addmod(X, n - r, n);
 
         return X == 0;
     } //end  ecdsa_precomputed_verify()
 
-     function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
-        internal view
+    function ecdsa_precomputed_verify(bytes32 message, uint256[2] calldata rs, address Shamir8)
+        internal
+        view
         returns (bool)
     {
         uint256 r = rs[0];
@@ -123,9 +119,8 @@ library FCL_ecdsa {
         //Shamir 8 dimensions
         X = FCL_Elliptic_ZZ.ecZZ_mulmuladd_S8_extcode(mulmod(uint256(message), sInv, n), mulmod(r, sInv, n), Shamir8);
 
-        X= addmod(X, n-r,n );
+        X = addmod(X, n - r, n);
 
         return X == 0;
     } //end  ecdsa_precomputed_verify()
-
 }
