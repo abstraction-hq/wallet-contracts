@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
+import "account-abstraction/core/EntryPoint.sol";
+
 import "../../src/modules/Passkey.sol";
 import "../../src/libraries/WebAuthn.sol";
+import "../../src/WalletFactory.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 contract PasskeyModuleTest is Test {
     PasskeyModule passkeyModule;
-    PasskeyModuleFactory passkeyModuleFactory;
+    WalletFactory walletFactory;
 
     function setUp() external {
-        passkeyModuleFactory = new PasskeyModuleFactory();
+        EntryPoint entryPoint = new EntryPoint();
+        walletFactory = new WalletFactory(address(entryPoint));
     }
 
     function testLogPasskeyModuleCreationCodeHash() external view {
@@ -19,7 +23,7 @@ contract PasskeyModuleTest is Test {
     }
 
     function testPassKey() external {
-        passkeyModule = passkeyModuleFactory.create(
+        passkeyModule = walletFactory.createPasskey(
             28203248099655634232680422976510411012986437076966613883671554831358983509938,
             79473938854726638551736530376995476499049493858003728502280535141260854783821
         );
@@ -35,8 +39,8 @@ contract PasskeyModuleTest is Test {
     function testComputeAddress() external {
         uint256 x = 28203248099655634232680422976510411012986437076966613883671554831358983509938;
         uint256 y = 79473938854726638551736530376995476499049493858003728502280535141260854783821;
-        address passkeyModuleAddress = passkeyModuleFactory.getPasskeyAddress(x, y);
-        passkeyModule = passkeyModuleFactory.create(x, y);
+        address passkeyModuleAddress = walletFactory.getPasskeyAddress(x, y);
+        passkeyModule = walletFactory.createPasskey(x, y);
 
         require(passkeyModuleAddress == address(passkeyModule), "passkey module address should be equal");
     }

@@ -13,12 +13,13 @@ contract Deployer is Script {
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        address exitedEntryPoint = vm.envAddress("ENTRY_POINT");
+        require(exitedEntryPoint != address(0), "ENTRY_POINT is required");
         vm.startBroadcast(deployerPrivateKey);
 
-        EntryPoint entryPoint = new EntryPoint();
-        console.log("EntryPoint: ", address(entryPoint));
+        console.log("EntryPoint: ", exitedEntryPoint);
 
-        WalletFactory walletFactory = new WalletFactory(address(entryPoint));
+        WalletFactory walletFactory = new WalletFactory(exitedEntryPoint);
         console.log("WalletFactory: ", address(walletFactory));
 
         vm.stopBroadcast();

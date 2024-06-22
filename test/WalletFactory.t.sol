@@ -31,7 +31,7 @@ contract WalletFactoryTest is Test {
         uint256 y = 79473938854726638551736530376995476499049493858003728502280535141260854783821;
 
         Wallet wallet = walletFactory.createWalletWithPasskey(x, y, salt);
-        PasskeyModule passkeyModule = PasskeyModule(walletFactory.passkeyModuleFactory().getPasskeyAddress(x, y));
+        PasskeyModule passkeyModule = PasskeyModule(walletFactory.getPasskeyAddress(x, y));
 
         require(wallet.isValidKey(address(passkeyModule)), "passkey module should be valid key");
         require(passkeyModule.x() == x, "x should be equal");
