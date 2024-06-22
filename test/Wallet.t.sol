@@ -5,7 +5,7 @@ import "account-abstraction/core/EntryPoint.sol";
 import "account-abstraction/interfaces/IEntryPoint.sol";
 import "../src/WalletFactory.sol";
 import "../src/Wallet.sol";
-import "./ERC4337Utils.sol";
+import "./utils/ERC4337Utils.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 

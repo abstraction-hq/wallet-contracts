@@ -7,6 +7,7 @@ import "account-abstraction/interfaces/IEntryPoint.sol";
 import "../src/WalletFactory.sol";
 import "../src/libraries/CustomERC1967.sol";
 import "../src/Wallet.sol";
+import "../src/modules/Passkey.sol";
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -22,6 +23,19 @@ contract WalletFactoryTest is Test {
 
     function testLogCustomERC1967CreationCodeHash() external view {
         console.logBytes32(keccak256(type(CustomERC1967).creationCode));
+    }
+
+    function testCreateWalletWithPasskey() external {
+        bytes32 salt = keccak256("testCreateWalletWithPasskey");
+        uint256 x = 28203248099655634232680422976510411012986437076966613883671554831358983509938;
+        uint256 y = 79473938854726638551736530376995476499049493858003728502280535141260854783821;
+
+        Wallet wallet = walletFactory.createWalletWithPasskey(x, y, salt);
+        PasskeyModule passkeyModule = PasskeyModule(walletFactory.passkeyModuleFactory().getPasskeyAddress(x, y));
+
+        require(wallet.isValidKey(address(passkeyModule)), "passkey module should be valid key");
+        require(passkeyModule.x() == x, "x should be equal");
+        require(passkeyModule.y() == y, "y should be equal");
     }
 
     function testComputeAddress() external {

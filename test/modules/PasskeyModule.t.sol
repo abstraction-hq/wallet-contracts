@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4;
 
-import "../src/modules/Passkey.sol";
-import "../src/libraries/WebAuthn.sol";
+import "../../src/modules/Passkey.sol";
+import "../../src/libraries/WebAuthn.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
