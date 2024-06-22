@@ -3,8 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
 
+import "forge-std/console.sol";
 import "account-abstraction/core/EntryPoint.sol";
 import "../src/WalletFactory.sol";
+import "../src/modules/Passkey.sol";
 
 contract Deployer is Script {
     function setUp() external {}
@@ -14,7 +16,13 @@ contract Deployer is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         EntryPoint entryPoint = new EntryPoint();
-        new WalletFactory(address(entryPoint));
+        console.log("EntryPoint: ", address(entryPoint));
+
+        WalletFactory walletFactory = new WalletFactory(address(entryPoint));
+        console.log("WalletFactory: ", address(walletFactory));
+
+        PasskeyModuleFactory passkeyModuleFactory = new PasskeyModuleFactory();
+        console.log("PasskeyModuleFactory: ", address(passkeyModuleFactory));
 
         vm.stopBroadcast();
     }
