@@ -34,9 +34,8 @@ contract WalletFactory is IWalletFactory {
         return Wallet(walletAddress);
     }
 
-    function _createPasskeyModule(uint256 x, uint256 y) internal returns (PasskeyModule) {
-        bytes32 salt = keccak256(abi.encodePacked(x, y));
-        address passkeyModuleAddress = getPasskeyAddress(x, y);
+    function _createPasskeyModule(uint256 x, uint256 y, bytes32 salt) internal returns (PasskeyModule) {
+        address passkeyModuleAddress = getPasskeyAddress(salt);
         if (passkeyModuleAddress.code.length > 0) {
             return PasskeyModule(passkeyModuleAddress);
         }
@@ -50,12 +49,12 @@ contract WalletFactory is IWalletFactory {
         return _createWallet(initKey, salt);
     }
 
-    function createPasskey(uint256 x, uint256 y) external returns (PasskeyModule) {
-        return _createPasskeyModule(x, y);
+    function createPasskey(uint256 x, uint256 y, bytes32 salt) external returns (PasskeyModule) {
+        return _createPasskeyModule(x, y, salt);
     }
 
     function createWalletWithPasskey(uint256 x, uint256 y, bytes32 salt) external returns (Wallet) {
-        PasskeyModule passkeyModule = _createPasskeyModule(x, y);
+        PasskeyModule passkeyModule = _createPasskeyModule(x, y, salt);
         return _createWallet(address(passkeyModule), salt);
     }
 
@@ -77,8 +76,7 @@ contract WalletFactory is IWalletFactory {
         );
     }
 
-    function getPasskeyAddress(uint256 x, uint256 y) public view returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(x, y));
+    function getPasskeyAddress(bytes32 salt) public view returns (address) {
         return payable(
             Create2.computeAddress(
                 salt,
