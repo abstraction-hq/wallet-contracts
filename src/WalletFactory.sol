@@ -67,6 +67,14 @@ contract WalletFactory is IWalletFactory {
         }
     }
 
+    function getPasskeyModuleCreationCodeHash() public pure returns(bytes32) {
+        return keccak256(type(PasskeyModule).creationCode);
+    }
+
+    function getWalletCreationCodeHash() public pure returns(bytes32) {
+        return keccak256(type(CustomERC1967).creationCode);
+    }
+
     function getWalletAddress(bytes32 salt) public view returns (address payable) {
         return payable(
             Create2.computeAddress(

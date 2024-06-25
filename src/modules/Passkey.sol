@@ -47,16 +47,7 @@ contract PasskeyModule is IModule {
         override
         returns (bytes4 magicValue)
     {
-        (bytes memory a, string memory b, uint256 c, uint256 d, uint256 e, uint256 f) = abi.decode(signature, (bytes, string, uint256, uint256, uint256, uint256));
-
-        WebAuthn.WebAuthnAuth memory auth = WebAuthn.WebAuthnAuth({
-            authenticatorData: a,
-            clientDataJSON: b,
-            challengeIndex: c,
-            typeIndex: d,
-            r: e,
-            s: f
-        });
+        WebAuthn.WebAuthnAuth memory auth = abi.decode(signature, (WebAuthn.WebAuthnAuth));
 
         if (WebAuthn.verify({challenge: abi.encode(digest), requireUV: false, webAuthnAuth: auth, x: x, y: y})) {
             return this.isValidSignature.selector;

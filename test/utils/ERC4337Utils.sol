@@ -14,11 +14,11 @@ library ERC4337Utils {
         op.sender = _sender;
         op.nonce = _entryPoint.getNonce(_sender, 0);
         op.callData = _data;
-        op.callGasLimit = 10000000;
-        op.verificationGasLimit = 10000000;
-        op.preVerificationGas = 50000;
-        op.maxFeePerGas = 50000;
-        op.maxPriorityFeePerGas = 1;
+        op.callGasLimit = 3000000;
+        op.verificationGasLimit = 3000000;
+        op.preVerificationGas = 3000000;
+        op.maxFeePerGas = 0;
+        op.maxPriorityFeePerGas = 0;
     }
 
     function signUserOpHash(EntryPoint _entryPoint, Vm _vm, uint256 _key, UserOperation memory _op)
