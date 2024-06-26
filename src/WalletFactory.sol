@@ -34,12 +34,8 @@ contract WalletFactory is IWalletFactory {
         return Wallet(walletAddress);
     }
 
+    // Only create new passkey module not return exited module
     function _createPasskeyModule(uint256 x, uint256 y, bytes32 salt) internal returns (PasskeyModule) {
-        address passkeyModuleAddress = getPasskeyAddress(salt);
-        if (passkeyModuleAddress.code.length > 0) {
-            return PasskeyModule(passkeyModuleAddress);
-        }
-
         PasskeyModule passkeyModule = new PasskeyModule{salt: salt}();
         passkeyModule.initialize(x, y);
         return passkeyModule;
@@ -79,7 +75,7 @@ contract WalletFactory is IWalletFactory {
         return payable(
             Create2.computeAddress(
                 salt,
-                keccak256(type(CustomERC1967).creationCode)
+                getWalletCreationCodeHash()
             )
         );
     }
@@ -88,7 +84,7 @@ contract WalletFactory is IWalletFactory {
         return payable(
             Create2.computeAddress(
                 salt,
-                keccak256(type(PasskeyModule).creationCode)
+                getPasskeyModuleCreationCodeHash()
             )
         );
     }
