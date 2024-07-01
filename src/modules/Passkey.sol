@@ -10,15 +10,47 @@ import "../libraries/Base64Url.sol";
 import {WebAuthn} from "../libraries/WebAuthn.sol";
 
 contract PasskeyModule is IModule {
-    uint256 public x;
-    uint256 public y;
+    struct PublicKey {
+        uint256 x;
+        uint256 y;
+    }
 
-    constructor() {}
+    mapping(address => mapping(bytes32 => PublicKey)) private _publicKeys;
 
-    function initialize(uint256 inputX, uint256 inputY) external {
-        require(x == 0 && y == 0, "already initialized");
-        x = inputX;
-        y = inputY;
+    event PasskeyRegistered(address indexed user, bytes32 indexed keyId, uint256 x, uint256 y);
+    event PasskeyRemoved(address indexed user, bytes32 indexed keyId);
+
+    function registerPublicKey(bytes32 keyId, uint256 x, uint256 y) external {
+        _publicKeys[msg.sender][keyId] = PublicKey(x, y);
+
+        emit PasskeyRegistered(msg.sender, keyId, x, y);
+    }
+
+    function removePublicKey(bytes32 keyId) external {
+        delete _publicKeys[msg.sender][keyId];
+
+        emit PasskeyRemoved(msg.sender, keyId);
+    }
+
+    function _validatePasskeySignature(bytes32 digest, bytes calldata signature)
+        internal
+        view
+        returns (bool)
+    {
+        address module = address(bytes20(signature[:20]));
+        if (module != address(this)) {
+            return false;
+        }
+
+        (bytes32 keyId, bytes memory passkeySignature) = abi.decode(signature[20:], (bytes32, bytes));
+        PublicKey memory publicKey = _publicKeys[msg.sender][keyId];
+        
+        if (publicKey.x == 0 || publicKey.y == 0) {
+            return false;
+        }
+
+        WebAuthn.WebAuthnAuth memory auth = abi.decode(passkeySignature, (WebAuthn.WebAuthnAuth));
+        return WebAuthn.verify({challenge: abi.encode(digest), requireUV: false, webAuthnAuth: auth, x: publicKey.x, y: publicKey.y});
     }
 
     function validateUserOp(UserOperation calldata userOp, bytes32 digest)
@@ -27,12 +59,7 @@ contract PasskeyModule is IModule {
         override
         returns (uint256 validationData)
     {
-        address module = address(bytes20(userOp.signature[:20]));
-        require(module == address(this), "invalid module");
-
-        bytes memory signature = userOp.signature[20:];
-
-        if (this.isValidSignature.selector == isValidSignature(digest, signature)) {
+        if (_validatePasskeySignature(digest, userOp.signature)) {
             return 0;
         }
 
@@ -41,15 +68,13 @@ contract PasskeyModule is IModule {
 
     function callback(UserOperation calldata, bytes32) external override {}
 
-    function isValidSignature(bytes32 digest, bytes memory signature)
+    function isValidSignature(bytes32 digest, bytes calldata signature)
         public
         view
         override
         returns (bytes4 magicValue)
     {
-        WebAuthn.WebAuthnAuth memory auth = abi.decode(signature, (WebAuthn.WebAuthnAuth));
-
-        if (WebAuthn.verify({challenge: abi.encode(digest), requireUV: false, webAuthnAuth: auth, x: x, y: y})) {
+        if (_validatePasskeySignature(digest, signature)) {
             return this.isValidSignature.selector;
         } else {
             return 0x0000;
