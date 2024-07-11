@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
 import "./Wallet.sol";
 
 contract Bootstrap is Wallet {

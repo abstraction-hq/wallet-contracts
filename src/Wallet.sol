@@ -12,8 +12,6 @@ import "./interfaces/IModule.sol";
 import "./interfaces/IWallet.sol";
 import "./libraries/DefaultCallbackHandler.sol";
 
-import "forge-std/console.sol";
-
 /**
  * @title Wallet
  * @author imduchuyyy
@@ -161,7 +159,6 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
     }
 
     function addKey(address key) external override authorized moduleCallback {
-        console.log("addKey", key, address(this));
         require(key != address(0) && key != SENTINEL_ADDRESS && key != address(this), "Invalid Key");
         address firstKey = _getKey(SENTINEL_ADDRESS);
         _setKey(key, firstKey);
