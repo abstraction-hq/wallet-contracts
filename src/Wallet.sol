@@ -12,6 +12,8 @@ import "./interfaces/IModule.sol";
 import "./interfaces/IWallet.sol";
 import "./libraries/DefaultCallbackHandler.sol";
 
+import "forge-std/console.sol";
+
 /**
  * @title Wallet
  * @author imduchuyyy
@@ -42,12 +44,10 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
     /**
      * @notice This function is used to initialize the wallet with an initial key.
      */
-    function __Wallet_init(bytes[] memory initData) external initializer {
-        for (uint256 i; i < initData.length; i++) {
-            (address bootstrap, bytes memory callData) = abi.decode(initData[i], (address, bytes));
-            (bool success,) = bootstrap.delegatecall(callData);
-            if (!success) revert("Wallet: Bootstrap failed");
-        }
+    function __Wallet_init(bytes memory initData) external initializer {
+        (address bootstrap, bytes memory callData) = abi.decode(initData, (address, bytes));
+        (bool success,) = bootstrap.delegatecall(callData);
+        if (!success) revert("Wallet: Bootstrap failed");
     }
 
     modifier moduleCallback() {
@@ -120,7 +120,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
      * @notice only accept entrypoint or self call
      */
     function _isValidCaller() internal view returns (bool) {
-        return msg.sender == address(entryPoint()) || msg.sender == address(this) || isValidKey(msg.sender);
+        return msg.sender == address(entryPoint()) || msg.sender == address(this);
     }
 
     /**
@@ -161,6 +161,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
     }
 
     function addKey(address key) external override authorized moduleCallback {
+        console.log("addKey", key, address(this));
         require(key != address(0) && key != SENTINEL_ADDRESS && key != address(this), "Invalid Key");
         address firstKey = _getKey(SENTINEL_ADDRESS);
         _setKey(key, firstKey);

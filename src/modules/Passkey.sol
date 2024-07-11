@@ -80,4 +80,8 @@ contract PasskeyModule is IModule {
             return 0x0000;
         }
     }
+
+    function getPublicKey(address user, bytes32 keyId) external view returns (PublicKey memory) {
+        return _publicKeys[user][keyId];
+    }
 }
