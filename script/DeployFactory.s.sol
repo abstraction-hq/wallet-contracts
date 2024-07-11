@@ -6,6 +6,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import "forge-std/console.sol";
 import "account-abstraction/core/EntryPoint.sol";
 import "../src/WalletFactory.sol";
+import "../src/Bootstrap.sol";
 import "../src/modules/Passkey.sol";
 
 contract Deployer is Script {
@@ -20,7 +21,12 @@ contract Deployer is Script {
         console.log("EntryPoint: ", exitedEntryPoint);
 
         WalletFactory walletFactory = new WalletFactory(exitedEntryPoint);
+        PasskeyModule passkey = new PasskeyModule();
+        Bootstrap bootstrap = new Bootstrap(address(passkey));
+
         console.log("WalletFactory: ", address(walletFactory));
+        console.log("Passkey: ", address(passkey));
+        console.log("Bootstrap: ", address(bootstrap));
 
         vm.stopBroadcast();
     }

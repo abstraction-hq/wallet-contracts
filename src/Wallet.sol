@@ -41,13 +41,11 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
 
     /**
      * @notice This function is used to initialize the wallet with an initial key.
-     * @param initKey The initial key to be set for the wallet.
      */
-    function __Wallet_init(address initKey) external initializer {
-        _setKey(SENTINEL_ADDRESS, initKey);
-        _setKey(initKey, SENTINEL_ADDRESS);
-
-        _increaseTotalKey();
+    function __Wallet_init(bytes memory initData) external initializer {
+        (address bootstrap, bytes memory callData) = abi.decode(initData, (address, bytes));
+        (bool success,) = bootstrap.delegatecall(callData);
+        if (!success) revert("Wallet: Bootstrap failed");
     }
 
     modifier moduleCallback() {
@@ -120,7 +118,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
      * @notice only accept entrypoint or self call
      */
     function _isValidCaller() internal view returns (bool) {
-        return msg.sender == address(entryPoint()) || msg.sender == address(this) || isValidKey(msg.sender);
+        return msg.sender == address(entryPoint()) || msg.sender == address(this);
     }
 
     /**
