@@ -7,19 +7,19 @@ import "forge-std/console.sol";
 import "account-abstraction/core/EntryPoint.sol";
 import "../src/WalletFactory.sol";
 import "../src/modules/Passkey.sol";
+import "./BaseDeployer.sol";
 
-contract Deployer is Script {
+contract Deployer is Script, BaseDeployer {
     function setUp() external {}
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        bytes32 salt = vm.envBytes32("SALT");
         vm.startBroadcast(deployerPrivateKey);
 
-        EntryPoint entryPoint = new EntryPoint();
-        console.log("EntryPoint: ", address(entryPoint));
-
-        WalletFactory walletFactory = new WalletFactory(address(entryPoint));
-        console.log("WalletFactory: ", address(walletFactory));
+        bytes memory code = type(EntryPoint).creationCode;
+        address entryPoint = genericFactory.create2(code, salt);
+        console.log("EntryPoint: ", entryPoint);
 
         vm.stopBroadcast();
     }
