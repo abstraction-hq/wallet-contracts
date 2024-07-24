@@ -4,18 +4,13 @@ pragma solidity ^0.8.0;
 import "../interfaces/IModule.sol";
 import "../interfaces/IWallet.sol";
 
-contract RecoveryModuleFactory {
-    function create(uint16 threshold, uint96 delayTime) external returns (RecoveryModule) {
-        return new RecoveryModule(msg.sender, threshold, delayTime);
-    }
-}
-
 contract RecoveryModule is IModule {
     uint256 internal constant SIG_VALIDATION_FAILED = 1;
 
-    struct Config {
-        uint16 threshold;
-        uint96 delayTime;
+    struct WalletConfig {
+        uint256 threshold;
+        uint256 minPowerToOpenTicket;
+        uint256 delayTime;
     }
 
     enum TicketStatus {
@@ -24,45 +19,25 @@ contract RecoveryModule is IModule {
     }
 
     struct Ticket {
+        bool isCreated;
         TicketStatus status;
         uint256 totalVote;
         uint256 startBlock;
         address newKey;
     }
+    
+    mapping(address => WalletConfig) private _configs;
 
-    mapping(address => bool) private _isGuardians;
-    mapping(uint256 => Ticket) private _tickets;
-    mapping(uint256 => mapping(address => bool)) private _votedGuardians;
+    mapping(address => mapping(address => uint256)) private _guardianPowers;
+    mapping(address => uint256) private _currentTicketNum;
+    mapping(address => mapping(uint256 => mapping(uint256 => Ticket))) private _tickets; // wallet => currentTicketNum => version => ticket
+    mapping(address => mapping(address => mapping(uint256 => bool))) private _isGuardianVoted;
 
-    event TicketOpened(uint256 tickedNum, address creator, Ticket ticket);
-    event TicketVoted(uint256 tickedNum, address voter);
-    event SetGuardian(address guardian, bool status);
-
-    address private immutable _wallet;
-    Config private _config;
-
-    constructor(address wallet, uint16 threshold, uint96 delayTime) {
-        _wallet = wallet;
-
-        _config.threshold = threshold;
-        _config.delayTime = delayTime;
-    }
-
-    modifier onlyGuardian() {
-        require(_isGuardians[msg.sender], "Only Guardian can call");
-        _;
-    }
-
-    modifier onlyWallet() {
-        require(msg.sender == _wallet, "Only wallet can call");
-        _;
-    }
-
-    function _setGuardian(address guardian, bool status) internal {
-        _isGuardians[guardian] = status;
-
-        emit SetGuardian(guardian, status);
-    }
+    event SetWalletConfig(address wallet, WalletConfig config);
+    event TicketOpened(address wallet, uint256 ticketNum, uint256 version, address creator, Ticket ticket);
+    event TicketClosed(address wallet, uint256 ticketNum);
+    event TicketVoted(address wallet, uint256 tickedNum, address voter);
+    event SetGuardianVotePower(address wallet, address guardian, uint256 votePower);
 
     function _decodeTicketNum(bytes calldata signature) internal view returns (uint256) {
         address module = address(bytes20(signature[:20]));
@@ -73,15 +48,31 @@ contract RecoveryModule is IModule {
         return ticketNum;
     }
 
-    function setGuardian(address guardian, bool status) external onlyWallet {
-        _setGuardian(guardian, status);
+    function setWalletConfig(WalletConfig memory config) external {
+        _configs[msg.sender] = config;
+
+        emit SetWalletConfig(msg.sender, config);
     }
 
-    function openTicket(uint256 ticketNum, address newKey) external onlyGuardian {
-        Ticket storage ticket = _tickets[ticketNum];
+    function setGuardian(address guardian, uint256 votePower) external {
+        _guardianPowers[msg.sender][guardian] = votePower;
+
+        emit SetGuardianVotePower(msg.sender, guardian, votePower);
+    }
+
+    function openTicket(address wallet, uint256 version, address newKey) external {
+        uint256 guardianPower = _guardianPowers[wallet][msg.sender];
+        require(guardianPower >= _configs[wallet].minPowerToOpenTicket, "Insufficient power");
+        require(!_tickets[wallet][_currentTicketNum[wallet]].isCreated, "Ticket is created");
+
+        uint256 currentTicketNum = _currentTicketNum[wallet];
+        require(!_tickets[wallet][currentTicketNum].isCreated, "Ticket is created");
+
+        Ticket storage ticket = _tickets[wallet][ticketNum][version];
         require(ticket.totalVote == 0, "Ticket exited");
         require(newKey != address(0), "Invalid new key");
 
+        ticket.isCreated = true;
         ticket.status = TicketStatus.Initial;
         ticket.totalVote = 1;
         ticket.startBlock = 0;
@@ -89,16 +80,35 @@ contract RecoveryModule is IModule {
 
         _votedGuardians[ticketNum][msg.sender] = true;
 
-        emit TicketOpened(ticketNum, msg.sender, ticket);
+        emit TicketOpened(wallet, ticketNum, version, msg.sender, ticket);
     }
 
-    function voteTicket(uint256 ticketNum) external onlyGuardian {
-        Ticket storage ticket = _tickets[ticketNum];
+    function closeTicket(address wallet) external {
+        if (wallet != msg.sender) {
+            require(_guardianPowers[wallet][msg.sender] >= _configs[wallet].minPowerToOpenTicket, "Insufficient power");
+        }
+        uint256 currentTicketNum = _currentTicketNum[wallet];
+        delete _tickets[wallet][_currentTicketNum[wallet]];
+        _currentTicketNum[wallet]++;
+
+        emit TicketClosed(wallet, currentTicketNum);
+    }
+
+    function voteTicket(address wallet) external {
+        uint256 currentTicketNum = _currentTicketNum[wallet];
+
+        Ticket storage ticket = _tickets[wallet][currentTicketNum];
+        require(ticket.isCreated, "Ticket not found");
         require(ticket.status == TicketStatus.Initial, "Ticket not found");
         require(ticket.newKey != address(0), "Invalid new key");
-        require(!_votedGuardians[ticketNum][msg.sender], "Voted");
 
-        ticket.totalVote++;
+        uint256 votePower = _guardianPowers[wallet][msg.sender];
+        require(votePower > 0, "Invalid vote power");
+
+        require(!_votedGuardians[wallet][ticketNum][msg.sender], "Voted");
+
+        ticket.totalVote += votePower;
+        _votedGuardians[wallet][ticketNum][msg.sender] = true;
 
         if (ticket.totalVote >= _config.threshold) {
             ticket.status = TicketStatus.Pass;
@@ -112,7 +122,6 @@ contract RecoveryModule is IModule {
         external
         view
         override
-        onlyWallet
         returns (uint256 validationData)
     {
         uint256 ticketNum = _decodeTicketNum(userOp.signature);
