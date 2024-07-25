@@ -16,24 +16,18 @@ contract PasskeyModule is IModule {
     }
 
     mapping(address => mapping(bytes32 => PublicKey)) private _publicKeys;
-    mapping(bytes32 => address) private _wallets;
 
     event PasskeyRegistered(address indexed user, bytes32 indexed keyId, uint256 x, uint256 y);
     event PasskeyRemoved(address indexed user, bytes32 indexed keyId);
 
     function registerPublicKey(bytes32 keyId, uint256 x, uint256 y) external {
-        require(_wallets[keyId] == address(0), "PasskeyModule: keyId already registered");
-
         _publicKeys[msg.sender][keyId] = PublicKey(x, y);
-        _wallets[keyId] = msg.sender;
 
         emit PasskeyRegistered(msg.sender, keyId, x, y);
     }
 
     function removePublicKey(bytes32 keyId) external {
-        require(_wallets[keyId] == msg.sender, "PasskeyModule: Unauthorized");
         delete _publicKeys[msg.sender][keyId];
-        delete _wallets[keyId];
 
         emit PasskeyRemoved(msg.sender, keyId);
     }
@@ -89,9 +83,5 @@ contract PasskeyModule is IModule {
 
     function getPublicKey(address user, bytes32 keyId) external view returns (PublicKey memory) {
         return _publicKeys[user][keyId];
-    }
-
-    function getWallet(bytes32 keyId) external view returns (address) {
-        return _wallets[keyId];
     }
 }
