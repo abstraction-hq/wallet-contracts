@@ -22,6 +22,8 @@ contract PasskeyModule is IModule {
     event PasskeyRemoved(address indexed user, bytes32 indexed keyId);
 
     function registerPublicKey(bytes32 keyId, uint256 x, uint256 y) external {
+        require(_wallets[keyId] == address(0), "PasskeyModule: keyId already registered");
+
         _publicKeys[msg.sender][keyId] = PublicKey(x, y);
         _wallets[keyId] = msg.sender;
 
@@ -29,6 +31,7 @@ contract PasskeyModule is IModule {
     }
 
     function removePublicKey(bytes32 keyId) external {
+        require(_wallets[keyId] == msg.sender, "PasskeyModule: Unauthorized");
         delete _publicKeys[msg.sender][keyId];
         delete _wallets[keyId];
 
