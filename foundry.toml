@@ -10,5 +10,6 @@ optimizer_runs = 200
 [rpc_endpoints]
 viction_testnet = "https://rpc-testnet.viction.xyz"
 viction = "https://rpc.viction.xyz"
+sepolia = "https://rpc.sepolia.org"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
