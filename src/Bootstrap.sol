@@ -10,21 +10,21 @@ contract Bootstrap is Wallet {
         passKeyModule = passkey;
     }
 
-    function _setInitKey() internal {
-        _setKey(SENTINEL_ADDRESS, passKeyModule);
-        _setKey(passKeyModule, SENTINEL_ADDRESS);
-        _increaseTotalKey();
-    }
+    // function _setInitKey() internal {
+    //     _setKey(SENTINEL_ADDRESS, passKeyModule);
+    //     _setKey(passKeyModule, SENTINEL_ADDRESS);
+    //     _increaseTotalKey();
+    // }
 
-    function _registerPasskey(bytes32 key, uint256 x, uint256 y) internal {
-        (bool success,) =
-            passKeyModule.call(abi.encodeWithSignature("registerPublicKey(bytes32,uint256,uint256)", key, x, y));
+    // function _registerPasskey(bytes32 key, uint256 x, uint256 y) internal {
+    //     (bool success,) =
+    //         passKeyModule.call(abi.encodeWithSignature("registerPublicKey(bytes32,uint256,uint256)", key, x, y));
         
-        require(success, "Bootstrap: failed to register public key");
-    }
+    //     require(success, "Bootstrap: failed to register public key");
+    // }
 
     function init(bytes32 key, uint256 x, uint256 y) external {
-        _registerPasskey(key, x, y);
-        _setInitKey();
+        // _registerPasskey(key, x, y);
+        // _setInitKey();
     }
 }

@@ -35,16 +35,8 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
 
     CallbackModule private _callbackCache;
 
-    constructor(address entryPointAddress) {
+    constructor(address entryPointAddress ) {
         _entryPoint = IEntryPoint(entryPointAddress);
-    }
-
-    /**
-     * @notice This function is used to initialize the wallet with an initial key.
-     */
-    function __Wallet_init(uint256 walletIndex, address keyStore) external initializer {
-        StorageSlot.getAddressSlot(KEY_STORE_SLOT).value = keyStore;
-        StorageSlot.getUint256Slot(WALLET_INDEX_SLOT).value = walletIndex;
     }
 
     modifier moduleCallback() {

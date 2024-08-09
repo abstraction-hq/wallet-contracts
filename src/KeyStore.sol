@@ -8,10 +8,11 @@ import "openzeppelin/interfaces/IERC1271.sol";
 
 import "./interfaces/IWalletFactory.sol";
 import "./interfaces/IModule.sol";
+import "./interfaces/IKeyStore.sol";
 import "./interfaces/IVerifier.sol";
 import "./libraries/CustomERC1967.sol";
 
-contract KeyStore is IERC1271 {
+contract KeyStore is IKeyStore {
     uint256 constant internal SIG_VALIDATION_FAILED = 1;
 
     address public immutable factory;
@@ -124,7 +125,7 @@ contract KeyStore is IERC1271 {
      * @param userOp user operation
      * @param userOpHash User Op hash
      */
-    function validateUserOp(uint256 walletIndex, UserOperation calldata userOp, bytes32 userOpHash) external onlyWallet(walletIndex) returns(uint256) {
+    function validateUserOp(uint256 walletIndex, UserOperation calldata userOp, bytes32 userOpHash) external override onlyWallet(walletIndex) returns(uint256) {
         address module = address(bytes20(userOp.signature[:20]));
 
         // if the module is a valid module, then use the module to validate the userOp
@@ -140,6 +141,11 @@ contract KeyStore is IERC1271 {
         return SIG_VALIDATION_FAILED;
     }
 
+    /**
+     * @dev Validate the signature
+     * @param hash the hash to be signed
+     * @param signature the signature
+     */
     function isValidSignature(bytes32 hash, bytes calldata signature) public view override returns (bytes4) {
         // Validate signature
         (bytes32 keyIndex, bytes memory decodedSignature) = abi.decode(signature, (bytes32, bytes));
@@ -155,24 +161,26 @@ contract KeyStore is IERC1271 {
         return 0x00000000;
     }
 
-    function getKeys() public view returns (bytes32[] memory, bytes[] memory) {
-        bytes32[] memory keyIndexes = new bytes32[](_totalKey);
+    function getKeys() public view returns (bytes[] memory) {
         bytes[] memory keyValues = new bytes[](_totalKey);
 
         bytes32 keyIndex = _keyLists[ANCHOR_KEY];
         for (uint256 i = 0; i < _totalKey; i++) {
-            keyIndexes[i] = keyIndex;
             keyValues[i] = _keys[keyIndex];
             keyIndex = _keyLists[keyIndex];
         }
 
-        return (keyIndexes, keyValues);
+        return keyValues;
+    }
+    
+    function getTotalKey() public view returns (uint256) {
+        return _totalKey;
     }
 
     function getVerifier(uint8 keyType) public view returns (address) {
         return _verifiers[keyType];
     }
-    
+
     function isValidModule(address module) public view returns (bool) {
         return _modules[module];
     }
