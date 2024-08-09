@@ -17,7 +17,7 @@ import "./libraries/DefaultCallbackHandler.sol";
  * @title Wallet
  * @notice This contract represents a Wallet in the system.
  */
-contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbackHandler, UUPSUpgradeable {
+contract SubWallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbackHandler, UUPSUpgradeable {
     using ECDSA for bytes32;
     using Address for address;
 
@@ -26,6 +26,7 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
     bytes32 public immutable WALLET_INDEX_SLOT = bytes32(uint256(keccak256("wallet-index")) - 1);
 
     IEntryPoint private immutable _entryPoint;
+    address private immutable _keyCache;
 
     struct CallbackModule {
         UserOperation userOp;
@@ -35,8 +36,9 @@ contract Wallet is IWallet, IERC1271, BaseAccount, Initializable, DefaultCallbac
 
     CallbackModule private _callbackCache;
 
-    constructor(address entryPointAddress ) {
+    constructor(address entryPointAddress, address keyCache) {
         _entryPoint = IEntryPoint(entryPointAddress);
+        _keyCache = keyCache;
     }
 
     modifier moduleCallback() {
